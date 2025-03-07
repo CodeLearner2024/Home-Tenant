@@ -83,7 +83,7 @@ body {
 }
 
 .header {
-  background-color: #333; /* Fond sombre pour l'en-tête */
+  background-color: cadetblue; /* Fond sombre pour l'en-tête */
   padding: 10px 20px; /* Espacement interne */
   width: 100%; /* Prendre toute la largeur disponible */
 }
@@ -126,3 +126,19 @@ body {
       margin: 10px 0; /* Espacement vertical entre les éléments */
   }
 }
+
+.container1{
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.main-content1{
+  display: flex;
+  flex-direction: row;
+}
+.home1{
+  margin-left: 300px;
+  margin-top: 100px;
+}
+
+
