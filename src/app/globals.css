@@ -20,19 +20,23 @@
 }
 
 body {
-  background: var(--background);
+  background: #EEF2F6;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
-
+.container {
+  display: flex; /* Utilisation de Flexbox pour la mise en page */
+  flex-direction: column; /* Le header prend la première ligne */
+  height: 100vh; /* Utiliser toute la hauteur de l'écran */
+}
 .sidebar {
   width: 200px;
   height: 100vh; /* Pleine hauteur */
-  background-color: #f4f4f4; /* Gris clair */
+  background-color: #FFFFFF; /* Gris clair */
   padding: 10px;
   position: fixed; /* Fixé sur le côté gauche */
   left: 0;
-  top: 0;
+  top: 47px;
   overflow-y: auto; /* Permet le défilement si nécessaire */
 }
 
@@ -59,7 +63,7 @@ body {
 
 /* Couleur au survol */
 .sidebar ul li a:hover {
-  background-color: blue;
+  background-color: cadetblue;
   color: white;
 }
 
@@ -75,5 +79,50 @@ body {
 
   .menu-btn {
       display: block;
+  }
+}
+
+.header {
+  background-color: #333; /* Fond sombre pour l'en-tête */
+  padding: 10px 20px; /* Espacement interne */
+  width: 100%; /* Prendre toute la largeur disponible */
+}
+
+/* Style de la liste non ordonnée (ul) */
+.header ul {
+  display: flex; /* Utilisation de Flexbox pour l'alignement horizontal */
+  justify-content: space-between; /* Espacement égal entre les éléments */
+  list-style-type: none; /* Retirer les puces */
+  margin: 0; /* Retirer les marges */
+  padding: 0; /* Retirer le padding */
+}
+
+/* Style des éléments de la liste (li) */
+.header ul li {
+  color: white; /* Texte blanc */
+  margin: 0 15px; /* Espacement entre les éléments */
+}
+
+/* Style des titres h3 */
+.header h3 {
+  margin: 0; /* Retirer les marges par défaut des h3 */
+  font-size: 18px; /* Taille de police */
+  text-align: center; /* Centrer le texte */
+}
+
+/* Pour centrer "Logo" à gauche */
+.header ul li:first-child {
+  margin-left: 0; /* Retirer la marge à gauche du logo */
+}
+
+/* Pour ajuster l'affichage en fonction de l'écran */
+@media (max-width: 768px) {
+  .header ul {
+      flex-direction: column; /* Passer à une disposition verticale sur les petits écrans */
+      align-items: center; /* Centrer les éléments verticalement */
+  }
+
+  .header ul li {
+      margin: 10px 0; /* Espacement vertical entre les éléments */
   }
 }
