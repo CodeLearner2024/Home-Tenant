@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import "../globals.css";
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import ModeEditOutlinedIcon from '@mui/icons-material/ModeEditOutlined';
 interface Home {
@@ -42,6 +42,28 @@ function Urupangu() {
       <div className="main-content1">
         <Sidebar />
         <div className="home1">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+      {/* Input */}
+      <TextField 
+        label="Search" 
+        variant="outlined" 
+        size="small" 
+        sx={{ flex: 1 }} 
+      />
+
+      {/* Search button */}
+      <Button variant="outlined" color="primary">
+        Search
+      </Button>
+
+      {/* Spacer (can be adjusted to your needs) */}
+      <div style={{ flexGrow: 1 }}></div>
+
+      {/* Add button */}
+      <Button variant="contained" color="primary">
+        + New Home
+      </Button>
+    </div>
         <TableContainer>
       <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
         <TableHead>
