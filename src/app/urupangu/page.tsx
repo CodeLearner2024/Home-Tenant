@@ -3,7 +3,9 @@ import React, { useEffect, useState } from 'react'
 import "../globals.css";
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import ModeEditOutlinedIcon from '@mui/icons-material/ModeEditOutlined';
 interface Home {
   id: number;
   code: string;
@@ -48,6 +50,7 @@ function Urupangu() {
             <TableCell align="right">code</TableCell>
             <TableCell align="right">Name</TableCell>
             <TableCell align="right">Adresse</TableCell>
+            <TableCell align="right">Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -62,6 +65,22 @@ function Urupangu() {
               <TableCell align="right">{row.code}</TableCell>
               <TableCell align="right">{row.name}</TableCell>
               <TableCell align="right">{row.adresse}</TableCell>
+              <TableCell align="right">
+                <Button sx={{fontSize: '16px'}}> <DeleteOutlineOutlinedIcon sx={{
+    fontSize: '16px',
+    '&:hover': {
+      fontSize: '20px',  
+      color: 'red',     
+    },
+  }} /></Button>
+                <Button sx={{fontSize: '16px'}}> <ModeEditOutlinedIcon sx={{
+    fontSize: '16px',
+    '&:hover': {
+      fontSize: '20px',  
+      color: 'blue',     
+    },
+  }} /></Button>
+                </TableCell>
             </TableRow>
           ))}
         </TableBody>
