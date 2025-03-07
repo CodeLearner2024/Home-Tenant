@@ -1,8 +1,9 @@
+import Sidebar from "@/components/Sidebar";
 
 export default function Home() {
   return (
     <>
-    <center>Welcome To Home-Tenant Management System</center>
+    <Sidebar/>
     </>
   );
 }
