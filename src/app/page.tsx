@@ -1,12 +1,11 @@
-import Header from "@/components/Header";
-import Sidebar from "@/components/Sidebar";
+
 import './globals.css'
+import LoginPage from "../components/LoginPage";
 
 export default function Home() {
   return (
-    <div className="container">
-    <Header/>
-    <Sidebar/>
+    <div>
+    <LoginPage/>
     </div>
   );
 }
