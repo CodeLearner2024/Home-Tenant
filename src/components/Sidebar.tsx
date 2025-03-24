@@ -9,7 +9,7 @@ function Sidebar() {
         <li><a href='#'>Dashboard</a></li>
         <li><a href="/urupangu">Home</a></li>
         <li><a href='/house'>House</a></li>
-        <li><a href='#'>Tenant</a></li>
+        <li><a href='/tenant'>Tenant</a></li>
         
       </ul>
     </div>
