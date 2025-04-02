@@ -6,7 +6,7 @@ function Sidebar() {
     
     <div className='sidebar'>
       <ul>
-        <li><a href='#'>Dashboard</a></li>
+        <li><a href='dashboard'>Dashboard</a></li>
         <li><a href="/urupangu">Home</a></li>
         <li><a href='/house'>House</a></li>
         <li><a href='/tenant'>Tenant</a></li>

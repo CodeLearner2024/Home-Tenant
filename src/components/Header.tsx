@@ -7,13 +7,6 @@ function Header() {
   const [languageAnchor, setLanguageAnchor] = useState(null);
   const [userAnchor, setUserAnchor] = useState(null);
 
-  const handleLanguageClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setLanguageAnchor(event.currentTarget);
-  };
-  
-  const handleUserClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setUserAnchor(event.currentTarget);
-  };
 
   const handleClose = () => {
     setLanguageAnchor(null);
@@ -39,7 +32,6 @@ function Header() {
             <Button
               className="menuItem"
               color="inherit"
-              onClick={handleLanguageClick}
               endIcon={<ArrowDropDownIcon />}
             >
               EN
@@ -59,7 +51,6 @@ function Header() {
             <Button
               className="menuItem"
               color="inherit"
-              onClick={handleUserClick}
               endIcon={<ArrowDropDownIcon />}
             >
               User

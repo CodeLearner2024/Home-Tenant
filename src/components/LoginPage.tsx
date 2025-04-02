@@ -27,7 +27,7 @@ function LoginPage() {
     }
 
     if (email === fakeUser.email && password === fakeUser.password) {
-      router.push('/home'); // Redirection
+      router.push('/dashboard'); // Redirection
     } else {
       setError('Email ou mot de passe incorrect.');
     }
