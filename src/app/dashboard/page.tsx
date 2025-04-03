@@ -115,7 +115,7 @@ const Dashboard: React.FC = () => {
                         title={item.title}
                         sx={{
                           textAlign: 'center',
-                          backgroundColor: '#1565c0',
+                          backgroundColor: 'cadetblue',
                           width: '100%',
                           padding: 1,
                         }}
