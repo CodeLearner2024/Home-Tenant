@@ -169,8 +169,8 @@ function Tenant() {
 
             <Box flex={1} />
 
-            <Button variant="contained" color="secondary" onClick={handleClickOpen}>
-              Ajouter un nouvel élément
+            <Button variant="contained" color="primary" onClick={handleClickOpen}>
+              Ajouter
             </Button>
           </Box>
 
@@ -229,7 +229,7 @@ function Tenant() {
 
           {/* Popup pour ajouter un tenant */}
           <Dialog open={open} onClose={handleClose} maxWidth="md">
-            <DialogTitle>Ajouter un nouvel élément</DialogTitle>
+            <DialogTitle>Ajouter</DialogTitle>
             <DialogContent>
               <TextField
                 label="Prénom"
