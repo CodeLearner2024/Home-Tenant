@@ -4,8 +4,7 @@ import React, { useState, useEffect } from "react";
 import "../globals.css";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
-import { Box, Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle, CircularProgress, MenuItem, Select, FormControl, InputLabel, Snackbar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from "@mui/material";
-import MuiAlert from '@mui/material/Alert';
+import { Box, Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle, CircularProgress, MenuItem, Select, FormControl, InputLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Snackbar } from "@mui/material";
 import VisibilityIcon from '@mui/icons-material/Visibility';  // Icône pour l'œil
 import { SelectChangeEvent } from '@mui/material/Select';
 
@@ -49,6 +48,7 @@ function Tenant() {
   const [tenants, setTenants] = useState<FormData[]>([]); // État pour stocker les tenants récupérés
   const [openDependentDialog, setOpenDependentDialog] = useState(false); // Pour gérer le popup des dépendants
   const [selectedDependents, setSelectedDependents] = useState<Dependent[]>([]); // Dépendants sélectionnés
+  const [searchTerm, setSearchTerm] = useState<string>(""); // État pour la recherche par email
 
   const handleClickOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -62,14 +62,11 @@ function Tenant() {
 
         if (response.ok && Array.isArray(data.content)) {
           setTenants(data.content); // Mettre à jour l'état avec les tenants récupérés
-          console.log("Data" + data);
         } else {
-          setMessage("Erreur lors de la récupération des tenants no try");
-          console.log("avant try");
+          setMessage("Erreur lors de la récupération des tenants");
           setOpenSnackbar(true);
         }
       } catch {
-        console.log("dans try");
         setMessage("Erreur lors de la récupération des tenants");
         setOpenSnackbar(true);
       }
@@ -78,12 +75,19 @@ function Tenant() {
     fetchTenants();
   }, []); // L'effet s'exécute une seule fois au montage du composant
 
+  // Filtrer les tenants selon l'email
+  const filteredTenants = tenants.filter(tenant => tenant.email.toLowerCase().includes(searchTerm.toLowerCase()));
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
 
   const handleAddDependentChange = (
@@ -127,7 +131,6 @@ function Tenant() {
         setMessage(data.message || "Élément ajouté avec succès!");
         setOpenSnackbar(true);
         handleClose();
-        // Ajouter le nouveau tenant à la liste après l'ajout
         setTenants((prevTenants) => [...prevTenants, formData]);
       } else {
         setMessage(data.message || "Erreur lors de l'ajout de l'élément");
@@ -161,10 +164,14 @@ function Tenant() {
         <div className="home1">
           <Box display="flex" alignItems="center" justifyContent="space-between" p={2}>
             <Box display="flex" alignItems="center" gap={2}>
-              <TextField label="Recherche" variant="outlined" size="small" fullWidth />
-              <Button variant="contained" color="primary">
-                Rechercher
-              </Button>
+              <TextField
+                label="Recherche par email"
+                variant="outlined"
+                size="small"
+                fullWidth
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
             </Box>
 
             <Box flex={1} />
@@ -188,7 +195,7 @@ function Tenant() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {tenants.map((tenant, index) => (
+                {filteredTenants.map((tenant, index) => (
                   <TableRow key={index}>
                     <TableCell>{tenant.firstname}</TableCell>
                     <TableCell>{tenant.lastname}</TableCell>
@@ -301,13 +308,14 @@ function Tenant() {
                       margin="normal"
                       fullWidth
                     />
-                    <FormControl fullWidth margin="normal">
+                    <FormControl fullWidth>
                       <InputLabel>Relation</InputLabel>
                       <Select
                         label="Relation"
                         value={dependent.relation}
                         onChange={(e) => handleAddDependentChange(index, e)}
                         name="relation"
+                        
                       >
                         <MenuItem value={RELATION.SPOUSE}>Conjoint</MenuItem>
                         <MenuItem value={RELATION.CHILD}>Enfant</MenuItem>
@@ -319,10 +327,10 @@ function Tenant() {
               ))}
 
               <Button
-                variant="contained"
+                variant="outlined"
                 color="primary"
                 onClick={handleAddDependent}
-                sx={{ marginTop: 2 }}
+                sx={{ marginTop: "16px" }}
               >
                 Ajouter un dépendant
               </Button>
@@ -342,15 +350,13 @@ function Tenant() {
             </DialogActions>
           </Dialog>
 
+          {/* Snackbar pour afficher les messages */}
           <Snackbar
             open={openSnackbar}
-            autoHideDuration={3000}
+            autoHideDuration={6000}
             onClose={() => setOpenSnackbar(false)}
-          >
-            <MuiAlert elevation={6} variant="filled" severity="success">
-              {message}
-            </MuiAlert>
-          </Snackbar>
+            message={message}
+          />
         </div>
       </div>
     </div>

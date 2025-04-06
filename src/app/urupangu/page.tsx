@@ -19,6 +19,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Paper,
   TextField,
 } from "@mui/material";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
@@ -33,6 +34,35 @@ interface Home {
 
 function Urupangu() {
   const [homes, setHomes] = useState<Home[]>([]);
+  const [filteredHomes, setFilteredHomes] = useState<Home[]>([]);
+  const [search, setSearch] = useState<string>("");
+
+  const fetchHomes = async () => {
+    try {
+      const response = await fetch("https://tenant-home-production.up.railway.app/homes");
+      const data = await response.json();
+      setHomes(data);
+      setFilteredHomes(data);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des homes :", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchHomes();
+  }, []);
+
+  useEffect(() => {
+    if (search.trim() === "") {
+      setFilteredHomes(homes);
+    } else {
+      const lowerSearch = search.toLowerCase();
+      setFilteredHomes(
+        homes.filter((home) => home.code.toLowerCase().includes(lowerSearch))
+      );
+    }
+  }, [search, homes]);
+
   const [formData, setFormData] = useState({
     code: "",
     name: "",
@@ -44,22 +74,6 @@ function Urupangu() {
     name: false,
     adresse: false,
   });
-
-  const fetchHomes = async () => {
-    try {
-      const response = await fetch(
-        "https://tenant-home-production.up.railway.app/homes"
-      );
-      const data = await response.json();
-      setHomes(data);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des homes :", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchHomes();
-  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -79,10 +93,8 @@ function Urupangu() {
       name: !formData.name,
       adresse: !formData.adresse,
     };
-
     setFormErrors(errors);
-
-    return !Object.values(errors).includes(true); // Return true if no error
+    return !Object.values(errors).includes(true);
   };
 
   const handleCreate = async () => {
@@ -90,34 +102,26 @@ function Urupangu() {
       setStatusMessage("Tous les champs doivent être remplis.");
       setSeverity("error");
       setOpenSnackbar(true);
-      return; 
+      return;
     }
 
     try {
-      const response = await fetch(
-        "https://tenant-home-production.up.railway.app/homes",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
+      const response = await fetch("https://tenant-home-production.up.railway.app/homes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
-      if (!response.ok) {
-        throw new Error("Erreur lors de l'ajout des données.");
-      }
+      if (!response.ok) throw new Error("Erreur lors de l'ajout.");
 
       setStatusMessage("Données ajoutées avec succès.");
       setSeverity("success");
-      setFormData({
-        code: "",
-        name: "",
-        adresse: "",
-      });
+      setFormData({ code: "", name: "", adresse: "" });
       setFormErrors({ code: false, name: false, adresse: false });
       await fetchHomes();
+      setOpenCreateDialog(false); // Fermer le popup après succès
     } catch {
       setStatusMessage("Une erreur est survenue.");
       setSeverity("error");
@@ -125,9 +129,7 @@ function Urupangu() {
     setOpenSnackbar(true);
   };
 
-  const handleCloseSnackbar = () => {
-    setOpenSnackbar(false);
-  };
+  const handleCloseSnackbar = () => setOpenSnackbar(false);
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
   const [selectedHomeToDelete, setSelectedHomeToDelete] = useState<Home | null>(null);
@@ -142,20 +144,14 @@ function Urupangu() {
       try {
         const response = await fetch(
           `https://tenant-home-production.up.railway.app/homes/${selectedHomeToDelete.id}`,
-          {
-            method: "DELETE",
-          }
+          { method: "DELETE" }
         );
 
-        if (!response.ok) {
-          throw new Error("Erreur lors de la suppression.");
-        }
+        if (!response.ok) throw new Error("Erreur lors de la suppression.");
 
         setStatusMessage("Maison supprimée avec succès");
         setSeverity("success");
-        setHomes(
-          homes.filter((home) => home.id !== selectedHomeToDelete.id)
-        );
+        setHomes(homes.filter((home) => home.id !== selectedHomeToDelete.id));
       } catch {
         setStatusMessage("Une erreur est survenue");
         setSeverity("error");
@@ -165,9 +161,7 @@ function Urupangu() {
     setOpenDeleteDialog(false);
   };
 
-  const handleDeleteCancel = () => {
-    setOpenDeleteDialog(false);
-  };
+  const handleDeleteCancel = () => setOpenDeleteDialog(false);
 
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [selectedHome, setSelectedHome] = useState<Home | null>(null);
@@ -182,9 +176,7 @@ function Urupangu() {
     setOpenDialog(true);
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-  };
+  const handleCloseDialog = () => setOpenDialog(false);
 
   const handleSaveChanges = async () => {
     if (selectedHome) {
@@ -200,14 +192,11 @@ function Urupangu() {
           }
         );
 
-        if (!response.ok) {
-          throw new Error("Erreur lors de la mise à jour des données.");
-        }
+        if (!response.ok) throw new Error("Erreur lors de la mise à jour.");
 
         setStatusMessage("Donnée mise à jour avec succès.");
         setSeverity("success");
         setOpenSnackbar(true);
-
         await fetchHomes();
         setOpenDialog(false);
       } catch {
@@ -218,210 +207,192 @@ function Urupangu() {
     }
   };
 
+  const [openCreateDialog, setOpenCreateDialog] = useState<boolean>(false);
+
+  const handleOpenCreateDialog = () => {
+    setFormData({ code: "", name: "", adresse: "" });
+    setFormErrors({ code: false, name: false, adresse: false });
+    setOpenCreateDialog(true);
+  };
+
+  const handleCloseCreateDialog = () => {
+    setOpenCreateDialog(false);
+  };
+
   return (
     <div className="container1">
       <div className="header1">
         <Header />
       </div>
-
       <div className="main-content1">
         <Sidebar />
         <div className="home1">
           <Box sx={{ padding: 3 }}>
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} sm={3}>
+              <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Code"
+                  label="Rechercher par code"
                   variant="outlined"
                   fullWidth
-                  name="code"
-                  value={formData.code}
-                  onChange={handleChange}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                   size="small"
-                  autoComplete="off"
-                  required
-                  error={formErrors.code}
-                  helperText={formErrors.code ? "Ce champ est requis" : ""}
-                  sx={{ marginBottom: 2 }} // Adding space below the input
                 />
               </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField
-                  label="Nom"
-                  variant="outlined"
-                  fullWidth
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  size="small"
-                  autoComplete="off"
-                  required
-                  error={formErrors.name}
-                  helperText={formErrors.name ? "Ce champ est requis" : ""}
-                  sx={{ marginBottom: 2 }} // Adding space below the input
-                />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField
-                  label="Adresse"
-                  variant="outlined"
-                  fullWidth
-                  name="adresse"
-                  value={formData.adresse}
-                  onChange={handleChange}
-                  size="small"
-                  autoComplete="off"
-                  required
-                  error={formErrors.adresse}
-                  helperText={formErrors.adresse ? "Ce champ est requis" : ""}
-                  sx={{ marginBottom: 2 }} // Adding space below the input
-                />
-              </Grid>
-              <Grid item xs={12} sm={3}>
+              <Grid item xs={12} sm={6}>
                 <Button
                   variant="contained"
                   color="primary"
                   fullWidth
-                  onClick={handleCreate}
+                  onClick={handleOpenCreateDialog}
                 >
                   Ajouter
                 </Button>
               </Grid>
             </Grid>
 
+            {/* Snackbar */}
             <Snackbar
               open={openSnackbar}
               autoHideDuration={3000}
               onClose={handleCloseSnackbar}
-              anchorOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
+              anchorOrigin={{ vertical: "top", horizontal: "right" }}
             >
               <Alert onClose={handleCloseSnackbar} severity={severity} sx={{ width: "100%" }}>
                 {statusMessage}
               </Alert>
             </Snackbar>
 
+            {/* Create Dialog (Popup pour Ajouter) */}
+            <Dialog open={openCreateDialog} onClose={handleCloseCreateDialog}>
+              <DialogTitle>Ajouter une maison</DialogTitle>
+              <DialogContent>
+                <TextField
+                  label="Code"
+                  name="code"
+                  fullWidth
+                  value={formData.code}
+                  onChange={handleChange}
+                  error={formErrors.code}
+                  helperText={formErrors.code ? "Champ requis" : ""}
+                  margin="dense"
+                />
+                <TextField
+                  label="Nom"
+                  name="name"
+                  fullWidth
+                  value={formData.name}
+                  onChange={handleChange}
+                  error={formErrors.name}
+                  helperText={formErrors.name ? "Champ requis" : ""}
+                  margin="dense"
+                />
+                <TextField
+                  label="Adresse"
+                  name="adresse"
+                  fullWidth
+                  value={formData.adresse}
+                  onChange={handleChange}
+                  error={formErrors.adresse}
+                  helperText={formErrors.adresse ? "Champ requis" : ""}
+                  margin="dense"
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleCloseCreateDialog}>Annuler</Button>
+                <Button onClick={handleCreate} color="primary">
+                  Ajouter
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            {/* Delete Dialog */}
             <Dialog open={openDeleteDialog} onClose={handleDeleteCancel}>
               <DialogTitle>Confirmer la suppression</DialogTitle>
               <DialogContent>
                 Êtes-vous sûr de vouloir supprimer cette maison ?
               </DialogContent>
               <DialogActions>
-                <Button onClick={handleDeleteCancel} color="primary">
-                  Annuler
-                </Button>
+                <Button onClick={handleDeleteCancel}>Annuler</Button>
                 <Button onClick={handleDeleteConfirm} color="secondary">
                   Confirmer
                 </Button>
               </DialogActions>
             </Dialog>
 
+            {/* Edit Dialog */}
             <Dialog open={openDialog} onClose={handleCloseDialog}>
               <DialogTitle>Modifier la maison</DialogTitle>
               <DialogContent>
                 <TextField
                   label="Code"
-                  variant="outlined"
-                  fullWidth
                   name="code"
+                  fullWidth
                   value={formData.code}
                   onChange={handleChange}
-                  size="small"
-                  autoComplete="off"
-                  required
-                  sx={{ marginBottom: 2 }} // Adding space below the input
+                  margin="dense"
                 />
                 <TextField
                   label="Nom"
-                  variant="outlined"
-                  fullWidth
                   name="name"
+                  fullWidth
                   value={formData.name}
                   onChange={handleChange}
-                  size="small"
-                  autoComplete="off"
-                  required
-                  sx={{ marginBottom: 2 }} // Adding space below the input
+                  margin="dense"
                 />
                 <TextField
                   label="Adresse"
-                  variant="outlined"
-                  fullWidth
                   name="adresse"
+                  fullWidth
                   value={formData.adresse}
                   onChange={handleChange}
-                  size="small"
-                  autoComplete="off"
-                  required
-                  sx={{ marginBottom: 2 }} // Adding space below the input
+                  margin="dense"
                 />
               </DialogContent>
               <DialogActions>
-                <Button onClick={handleCloseDialog} color="primary">
-                  Annuler
-                </Button>
+                <Button onClick={handleCloseDialog}>Annuler</Button>
                 <Button onClick={handleSaveChanges} color="secondary">
                   Sauvegarder
                 </Button>
               </DialogActions>
             </Dialog>
 
-            <TableContainer>
-              <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
+            {/* Table */}
+            <TableContainer component={Paper} sx={{ marginTop: 3 }}>
+              <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell className="table-header">Numero</TableCell>
-                    <TableCell align="right" className="table-header">
-                      Code
-                    </TableCell>
-                    <TableCell align="right" className="table-header">
-                      Nom
-                    </TableCell>
-                    <TableCell align="right" className="table-header">
-                      Adresse
-                    </TableCell>
-                    <TableCell align="right" className="table-header">
-                      Actions
-                    </TableCell>
+                    <TableCell>Numéro</TableCell>
+                    <TableCell>Code</TableCell>
+                    <TableCell>Nom</TableCell>
+                    <TableCell>Adresse</TableCell>
+                    <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {homes.map((row) => (
+                  {filteredHomes.map((row) => (
                     <TableRow key={row.id}>
-                      <TableCell component="th" scope="row">
-                        {row.id}
-                      </TableCell>
-                      <TableCell align="right">{row.code}</TableCell>
-                      <TableCell align="right">{row.name}</TableCell>
-                      <TableCell align="right">{row.adresse}</TableCell>
-                      <TableCell align="right">
-                        <Button sx={{ fontSize: "16px" }} onClick={() => handleDeleteClick(row)}>
-                          <DeleteOutlineOutlinedIcon
-                            sx={{
-                              fontSize: "16px",
-                              "&:hover": {
-                                fontSize: "20px",
-                                color: "red",
-                              },
-                            }}
-                          />
+                      <TableCell>{row.id}</TableCell>
+                      <TableCell>{row.code}</TableCell>
+                      <TableCell>{row.name}</TableCell>
+                      <TableCell>{row.adresse}</TableCell>
+                      <TableCell>
+                        <Button onClick={() => handleDeleteClick(row)}>
+                          <DeleteOutlineOutlinedIcon />
                         </Button>
-                        <Button sx={{ fontSize: "16px" }} onClick={() => handleEditClick(row)}>
-                          <ModeEditOutlinedIcon
-                            sx={{
-                              fontSize: "16px",
-                              "&:hover": {
-                                fontSize: "20px",
-                                color: "blue",
-                              },
-                            }}
-                          />
+                        <Button onClick={() => handleEditClick(row)}>
+                          <ModeEditOutlinedIcon />
                         </Button>
                       </TableCell>
                     </TableRow>
                   ))}
+                  {filteredHomes.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center">
+                        Aucun résultat trouvé.
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>

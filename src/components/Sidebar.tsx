@@ -10,6 +10,8 @@ function Sidebar() {
         <li><a href="/urupangu">Home</a></li>
         <li><a href='/house'>House</a></li>
         <li><a href='/tenant'>Tenant</a></li>
+        <li><a href='#'>Lease Agreement</a></li>
+        <li><a href='#'>Rent Payment</a></li>
         
       </ul>
     </div>

@@ -1,4 +1,4 @@
-"use client";
+"use client"
 import React, { useEffect, useState } from "react";
 import "../globals.css";
 import Header from "@/components/Header";
@@ -12,6 +12,11 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Paper,
   Snackbar,
   Table,
   TableBody,
@@ -20,81 +25,163 @@ import {
   TableHead,
   TableRow,
   TextField,
+  IconButton,
 } from "@mui/material";
-import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
-import ModeEditOutlinedIcon from "@mui/icons-material/ModeEditOutlined";
+import { Delete, Edit } from "@mui/icons-material";
 
 interface Home {
   id: number;
   code: string;
+  name: string;
+  adresse: string;
+}
+
+interface House {
+  id: number;
+  code: string;
   numberOfRooms: number;
   rent: number;
-  isOccupied: boolean,
-  homeId: number
-
+  homeId: number;
+  occupied: boolean;
 }
 
 function House() {
   const [homes, setHomes] = useState<Home[]>([]);
-  const [formData, setFormData] = useState({
-    code: "",
-    numberOfRooms: 0,
-    rent: 0,
-    homeId: 1
-  });
-
-  const [formErrors, setFormErrors] = useState({
-    code: false,
-    numberOfRooms: false,
-    rent: false,
-  });
-
-  const fetchHomes = async () => {
-    try {
-      const response = await fetch(
-        "https://tenant-home-production.up.railway.app/houses"
-      );
-      const data = await response.json();
-      setHomes(data);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des homes :", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchHomes();
-  }, []);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
+  const [houses, setHouses] = useState<House[]>([]);
+  const [searchCode, setSearchCode] = useState<string>(""); 
+  const [filteredHouses, setFilteredHouses] = useState<House[]>([]);
 
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [openSnackbar, setOpenSnackbar] = useState<boolean>(false);
   const [severity, setSeverity] = useState<"success" | "error">("success");
 
-  const validateForm = () => {
-    const errors = {
-      code: !formData.code,
-      numberOfRooms: !formData.numberOfRooms,
-      rent: !formData.rent,
-    };
+  const [openFormDialog, setOpenFormDialog] = useState<boolean>(false);
+  const [openUpdateDialog, setOpenUpdateDialog] = useState<boolean>(false);
 
-    setFormErrors(errors);
+  const [newHouseData, setNewHouseData] = useState({
+    code: "",
+    numberOfRooms: "",
+    rent: "",
+    homeId: "",
+  });
 
-    return !Object.values(errors).includes(true); // Return true if no error
+  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
+  const [houseToDelete, setHouseToDelete] = useState<House | null>(null);
+
+  const fetchHomes = async () => {
+    try {
+      const response = await fetch(
+        "https://tenant-home-production.up.railway.app/homes"
+      );
+      const data = await response.json();
+      setHomes(data);
+      console.log("========================>homes:", data);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des maisons :", error);
+    }
   };
 
-  const handleCreate = async () => {
-    if (!validateForm()) {
-      setStatusMessage("Tous les champs doivent être remplis.");
+  const fetchHouses = async () => {
+    try {
+      const response = await fetch(
+        "https://tenant-home-production.up.railway.app/houses"
+      );
+      const data = await response.json();
+      setHouses(data);
+      console.log("========================>houses:", data);
+      setFilteredHouses(data);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des maisons :", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchHomes();
+    fetchHouses();
+  }, []);
+
+  useEffect(() => {
+    if (searchCode.trim() === "") {
+      setFilteredHouses(houses);
+    } else {
+      const filtered = houses.filter((house) =>
+        house.code.toLowerCase().includes(searchCode.toLowerCase())
+      );
+      setFilteredHouses(filtered);
+    }
+  }, [searchCode, houses]);
+
+  const handleCreateClick = () => {
+    setNewHouseData({
+      code: "",
+      numberOfRooms: "",
+      rent: "",
+      homeId: "",
+    });
+    setOpenFormDialog(true);
+  };
+
+  const handleUpdateClick = (house: House) => {
+    const homeId = house.homeId ? house.homeId.toString() : "";
+    setNewHouseData({
+      code: house.code,
+      numberOfRooms: house.numberOfRooms.toString(),
+      rent: house.rent.toString(),
+      homeId: homeId,
+    });
+    setOpenUpdateDialog(true);
+  };
+
+  const handleDeleteClick = (house: House) => {
+    setHouseToDelete(house);
+    setOpenDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (houseToDelete) {
+      try {
+        const response = await fetch(
+          `https://tenant-home-production.up.railway.app/houses/${houseToDelete.id}`,
+          { method: "DELETE" }
+        );
+        if (!response.ok) throw new Error("Erreur lors de la suppression.");
+        setStatusMessage("Maison supprimée avec succès.");
+        setSeverity("success");
+        await fetchHouses();
+        setOpenDeleteDialog(false);
+      } catch {
+        setStatusMessage("Erreur lors de la suppression.");
+        setSeverity("error");
+      }
+      setOpenSnackbar(true);
+    }
+  };
+
+  const handleFormSubmit = async () => {
+    const numberOfRooms = parseInt(newHouseData.numberOfRooms as string);
+    const rent = parseFloat(newHouseData.rent as string);
+
+    if (
+      !newHouseData.code ||
+      isNaN(numberOfRooms) ||
+      isNaN(rent) ||
+      numberOfRooms <= 0 ||
+      rent <= 0 ||
+      !newHouseData.homeId
+    ) {
+      setStatusMessage("Tous les champs sont obligatoires, y compris la maison.");
       setSeverity("error");
       setOpenSnackbar(true);
-      return; 
+      return;
+    }
+
+    const selectedHome = homes.find((home) => home.id === parseInt(newHouseData.homeId as string));
+
+    if (!selectedHome) {
+      setStatusMessage("Maison sélectionnée invalide.");
+      setSeverity("error");
+      setOpenSnackbar(true);
+      return;
     }
 
     try {
@@ -105,123 +192,80 @@ function House() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({
+            code: newHouseData.code,
+            numberOfRooms,
+            rent,
+            homeId: parseInt(newHouseData.homeId as string),
+            occupied: false,
+          }),
         }
       );
 
       if (!response.ok) {
-        throw new Error("Erreur lors de l'ajout des données.");
+        throw new Error("Erreur lors de l'ajout.");
       }
 
-      setStatusMessage("Données ajoutées avec succès.");
+      setStatusMessage("Maison ajoutée avec succès.");
       setSeverity("success");
-      setFormData({
-        code: "",
-        numberOfRooms:0 ,
-        rent: 0,
-        homeId:1
-      });
-      setFormErrors({ code: false, numberOfRooms: false, rent: false });
-      await fetchHomes();
+      await fetchHouses();
+      setOpenFormDialog(false);
     } catch {
-      setStatusMessage("Une erreur est survenue.");
+      setStatusMessage("Erreur lors de l'ajout.");
       setSeverity("error");
     }
     setOpenSnackbar(true);
   };
 
-  const handleCloseSnackbar = () => {
-    setOpenSnackbar(false);
-  };
+  const handleUpdateSubmit = async () => {
+    const numberOfRooms = parseInt(newHouseData.numberOfRooms as string);
+    const rent = parseFloat(newHouseData.rent as string);
 
-  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
-  const [selectedHomeToDelete, setSelectedHomeToDelete] = useState<Home | null>(null);
-
-  const handleDeleteClick = (home: Home) => {
-    setSelectedHomeToDelete(home);
-    setOpenDeleteDialog(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (selectedHomeToDelete) {
-      try {
-        const response = await fetch(
-          `https://tenant-home-production.up.railway.app/houses/${selectedHomeToDelete.id}`,
-          {
-            method: "DELETE",
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Erreur lors de la suppression.");
-        }
-
-        setStatusMessage("Maison supprimée avec succès");
-        setSeverity("success");
-        setHomes(
-          homes.filter((home) => home.id !== selectedHomeToDelete.id)
-        );
-      } catch {
-        setStatusMessage("Une erreur est survenue");
-        setSeverity("error");
-      }
+    if (
+      !newHouseData.code ||
+      isNaN(numberOfRooms) ||
+      isNaN(rent) ||
+      numberOfRooms <= 0 ||
+      rent <= 0 ||
+      !newHouseData.homeId
+    ) {
+      setStatusMessage("Tous les champs sont obligatoires, y compris la maison.");
+      setSeverity("error");
       setOpenSnackbar(true);
+      return;
     }
-    setOpenDeleteDialog(false);
-  };
 
-  const handleDeleteCancel = () => {
-    setOpenDeleteDialog(false);
-  };
-
-  const [openDialog, setOpenDialog] = useState<boolean>(false);
-  const [selectedHome, setSelectedHome] = useState<Home | null>(null);
-
-  const handleEditClick = (home: Home) => {
-    setSelectedHome(home);
-    setFormData({
-      code: home.code,
-      numberOfRooms: home.numberOfRooms,
-      rent: home.rent,
-      homeId: home.homeId
-    });
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-  };
-
-  const handleSaveChanges = async () => {
-    if (selectedHome) {
-      try {
-        const response = await fetch(
-          `https://tenant-home-production.up.railway.app/houses/${selectedHome.id}`,
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Erreur lors de la mise à jour des données.");
+    try {
+      const response = await fetch(
+        `https://tenant-home-production.up.railway.app/houses/${newHouseData.homeId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            code: newHouseData.code,
+            numberOfRooms,
+            rent,
+            homeId: parseInt(newHouseData.homeId as string),
+            occupied: false,
+          }),
         }
+      );
 
-        setStatusMessage("Donnée mise à jour avec succès.");
-        setSeverity("success");
-        setOpenSnackbar(true);
-
-        await fetchHomes();
-        setOpenDialog(false);
-      } catch {
-        setStatusMessage("Une erreur est survenue.");
-        setSeverity("error");
-        setOpenSnackbar(true);
+      if (!response.ok) {
+        throw new Error("Erreur lors de la mise à jour.");
       }
+
+      setStatusMessage("Maison mise à jour avec succès.");
+      setSeverity("success");
+      await fetchHouses();
+      setOpenUpdateDialog(false);
+    } catch {
+      setStatusMessage("Erreur lors de la mise à jour.");
+      setSeverity("error");
     }
+    setOpenSnackbar(true);
   };
 
   return (
@@ -235,60 +279,23 @@ function House() {
         <div className="home1">
           <Box sx={{ padding: 3 }}>
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} sm={3}>
+              <Grid item xs={12} sm={8}>
                 <TextField
-                  label="Code"
+                  label="Rechercher par code"
                   variant="outlined"
                   fullWidth
-                  name="code"
-                  value={formData.code}
-                  onChange={handleChange}
+                  value={searchCode}
+                  onChange={(e) => setSearchCode(e.target.value)}
                   size="small"
                   autoComplete="off"
-                  required
-                  error={formErrors.code}
-                  helperText={formErrors.code ? "Ce champ est requis" : ""}
-                  sx={{ marginBottom: 2 }} // Adding space below the input
                 />
               </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField
-                  label="Number of rooms"
-                  variant="outlined"
-                  fullWidth
-                  name="numberOfRooms"
-                  value={formData.numberOfRooms}
-                  onChange={handleChange}
-                  size="small"
-                  autoComplete="off"
-                  required
-                  error={formErrors.numberOfRooms}
-                  helperText={formErrors.numberOfRooms ? "Ce champ est requis" : ""}
-                  sx={{ marginBottom: 2 }} // Adding space below the input
-                />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField
-                  label="Rent"
-                  variant="outlined"
-                  fullWidth
-                  name="rent"
-                  value={formData.rent}
-                  onChange={handleChange}
-                  size="small"
-                  autoComplete="off"
-                  required
-                  error={formErrors.rent}
-                  helperText={formErrors.rent ? "Ce champ est requis" : ""}
-                  sx={{ marginBottom: 2 }} // Adding space below the input
-                />
-              </Grid>
-              <Grid item xs={12} sm={3}>
+              <Grid item xs={12} sm={4}>
                 <Button
                   variant="contained"
                   color="primary"
                   fullWidth
-                  onClick={handleCreate}
+                  onClick={handleCreateClick}
                 >
                   Ajouter
                 </Button>
@@ -298,133 +305,185 @@ function House() {
             <Snackbar
               open={openSnackbar}
               autoHideDuration={3000}
-              onClose={handleCloseSnackbar}
-              anchorOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
+              onClose={() => setOpenSnackbar(false)}
+              anchorOrigin={{ vertical: "top", horizontal: "right" }}
             >
-              <Alert onClose={handleCloseSnackbar} severity={severity} sx={{ width: "100%" }}>
+              <Alert
+                onClose={() => setOpenSnackbar(false)}
+                severity={severity}
+                sx={{ width: "100%" }}
+              >
                 {statusMessage}
               </Alert>
             </Snackbar>
 
-            <Dialog open={openDeleteDialog} onClose={handleDeleteCancel}>
-              <DialogTitle>Confirmer la suppression</DialogTitle>
-              <DialogContent>
-                Êtes-vous sûr de vouloir supprimer cette maison ?
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={handleDeleteCancel} color="primary">
-                  Annuler
-                </Button>
-                <Button onClick={handleDeleteConfirm} color="secondary">
-                  Confirmer
-                </Button>
-              </DialogActions>
-            </Dialog>
-
-            <Dialog open={openDialog} onClose={handleCloseDialog}>
-              <DialogTitle>Modifier la maison</DialogTitle>
+            <Dialog open={openFormDialog} onClose={() => setOpenFormDialog(false)}>
+              <DialogTitle>Ajouter une maison</DialogTitle>
               <DialogContent>
                 <TextField
                   label="Code"
-                  variant="outlined"
                   fullWidth
-                  name="code"
-                  value={formData.code}
-                  onChange={handleChange}
-                  size="small"
-                  autoComplete="off"
-                  required
-                  sx={{ marginBottom: 2 }} // Adding space below the input
+                  margin="dense"
+                  value={newHouseData.code}
+                  onChange={(e) =>
+                    setNewHouseData({ ...newHouseData, code: e.target.value })
+                  }
                 />
                 <TextField
-                  label="number of rooms"
-                  variant="outlined"
+                  label="Nombre de pièces"
+                  type="number"
                   fullWidth
-                  name="number of rooms"
-                  value={formData.numberOfRooms}
-                  onChange={handleChange}
-                  size="small"
-                  autoComplete="off"
-                  required
-                  sx={{ marginBottom: 2 }} // Adding space below the input
+                  margin="dense"
+                  value={newHouseData.numberOfRooms}
+                  onChange={(e) =>
+                    setNewHouseData({
+                      ...newHouseData,
+                      numberOfRooms: e.target.value,
+                    })
+                  }
                 />
                 <TextField
-                  label="Rent"
-                  variant="outlined"
+                  label="Loyer"
+                  type="number"
                   fullWidth
-                  name="rent"
-                  value={formData.rent}
-                  onChange={handleChange}
-                  size="small"
-                  autoComplete="off"
-                  required
-                  sx={{ marginBottom: 2 }} // Adding space below the input
+                  margin="dense"
+                  value={newHouseData.rent}
+                  onChange={(e) =>
+                    setNewHouseData({
+                      ...newHouseData,
+                      rent: e.target.value,
+                    })
+                  }
                 />
+                <FormControl fullWidth margin="dense">
+                  <InputLabel>Choisir une maison</InputLabel>
+                  <Select
+                    value={newHouseData.homeId}
+                    onChange={(e) =>
+                      setNewHouseData({ ...newHouseData, homeId: e.target.value })
+                    }
+                  >
+                    {homes.map((home) => (
+                      <MenuItem key={home.id} value={home.id}>
+                        {home.code} - {home.name} ({home.adresse})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </DialogContent>
               <DialogActions>
-                <Button onClick={handleCloseDialog} color="primary">
-                  Annuler
-                </Button>
-                <Button onClick={handleSaveChanges} color="secondary">
-                  Sauvegarder
+                <Button onClick={() => setOpenFormDialog(false)}>Annuler</Button>
+                <Button onClick={handleFormSubmit} color="primary">
+                  Ajouter
                 </Button>
               </DialogActions>
             </Dialog>
 
-            <TableContainer>
-              <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
+            <Dialog open={openUpdateDialog} onClose={() => setOpenUpdateDialog(false)}>
+              <DialogTitle>Mettre à jour une maison</DialogTitle>
+              <DialogContent>
+                <TextField
+                  label="Code"
+                  fullWidth
+                  margin="dense"
+                  value={newHouseData.code}
+                  onChange={(e) =>
+                    setNewHouseData({ ...newHouseData, code: e.target.value })
+                  }
+                />
+                <TextField
+                  label="Number of rooms"
+                  type="number"
+                  fullWidth
+                  margin="dense"
+                  value={newHouseData.numberOfRooms}
+                  onChange={(e) =>
+                    setNewHouseData({
+                      ...newHouseData,
+                      numberOfRooms: e.target.value,
+                    })
+                  }
+                />
+                <TextField
+                  label="Loyer"
+                  type="number"
+                  fullWidth
+                  margin="dense"
+                  value={newHouseData.rent}
+                  onChange={(e) =>
+                    setNewHouseData({
+                      ...newHouseData,
+                      rent: e.target.value,
+                    })
+                  }
+                />
+                <FormControl fullWidth margin="dense">
+                  <InputLabel>Choisir une maison</InputLabel>
+                  <Select
+                    value={newHouseData.homeId}
+                    onChange={(e) =>
+                      setNewHouseData({ ...newHouseData, homeId: e.target.value })
+                    }
+                  >
+                    {homes.map((home) => (
+                      <MenuItem key={home.id} value={home.id}>
+                        {home.code} - {home.name} ({home.adresse})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setOpenUpdateDialog(false)}>Annuler</Button>
+                <Button onClick={handleUpdateSubmit} color="primary">
+                  Mettre à jour
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            <Dialog
+              open={openDeleteDialog}
+              onClose={() => setOpenDeleteDialog(false)}
+            >
+              <DialogTitle>Confirmer la suppression</DialogTitle>
+              <DialogContent>
+                <p>Êtes-vous sûr de vouloir supprimer cette maison ?</p>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setOpenDeleteDialog(false)}>
+                  Annuler
+                </Button>
+                <Button onClick={confirmDelete} color="primary">
+                  Supprimer
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            <TableContainer component={Paper}>
+              <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell className="table-header">Numero</TableCell>
-                    <TableCell align="right" className="table-header">
-                      Code
-                    </TableCell>
-                    <TableCell align="right" className="table-header">
-                      Number od rooms
-                    </TableCell>
-                    <TableCell align="right" className="table-header">
-                      Rent
-                    </TableCell>
-                    <TableCell align="right" className="table-header">
-                      Actions
-                    </TableCell>
+                    <TableCell>Code</TableCell>
+                    <TableCell>Nombre de chambres</TableCell>
+                    <TableCell>Loyer</TableCell>
+                    <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {homes.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell component="th" scope="row">
-                        {row.id}
-                      </TableCell>
-                      <TableCell align="right">{row.code}</TableCell>
-                      <TableCell align="right">{row.numberOfRooms}</TableCell>
-                      <TableCell align="right">{row.rent}</TableCell>
-                      <TableCell align="right">
-                        <Button sx={{ fontSize: "16px" }} onClick={() => handleDeleteClick(row)}>
-                          <DeleteOutlineOutlinedIcon
-                            sx={{
-                              fontSize: "16px",
-                              "&:hover": {
-                                fontSize: "20px",
-                                color: "red",
-                              },
-                            }}
-                          />
-                        </Button>
-                        <Button sx={{ fontSize: "16px" }} onClick={() => handleEditClick(row)}>
-                          <ModeEditOutlinedIcon
-                            sx={{
-                              fontSize: "16px",
-                              "&:hover": {
-                                fontSize: "20px",
-                                color: "blue",
-                              },
-                            }}
-                          />
-                        </Button>
+                  {filteredHouses.map((house) => (
+                    <TableRow key={house.id}>
+                      <TableCell>{house.code}</TableCell>
+                      <TableCell>{house.numberOfRooms}</TableCell>
+                      <TableCell>{house.rent}</TableCell>
+                      <TableCell>
+                        <IconButton onClick={() => handleUpdateClick(house)}>
+                          <Edit />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => handleDeleteClick(house)}
+                        >
+                          <Delete />
+                        </IconButton>
                       </TableCell>
                     </TableRow>
                   ))}
